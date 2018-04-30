@@ -43,6 +43,7 @@ import assignment.promobi.rajeev.com.promobiassignment.Filters.ArticleFilter;
 import assignment.promobi.rajeev.com.promobiassignment.Fragment.FragmentComplete;
 import assignment.promobi.rajeev.com.promobiassignment.Fragment.SettingsFragment;
 import assignment.promobi.rajeev.com.promobiassignment.Helper.EndlessRecyclerViewScrollListener;
+import assignment.promobi.rajeev.com.promobiassignment.Helper.NetworkHelper;
 import assignment.promobi.rajeev.com.promobiassignment.Models.ApiResponse;
 import assignment.promobi.rajeev.com.promobiassignment.Models.Article;
 import assignment.promobi.rajeev.com.promobiassignment.R;
@@ -57,14 +58,7 @@ import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity {
-    private TabLayout tabLayout;
-    private ViewPager viewPager;
-    private DrawerLayout drawer;
-    private TextView tvEmpName;
-    private TextView tvEmpEmail;
-    String EmpNAME,EmpEMAIL;
-    WebView webView;
-    private String currentUrl ="";
+
     ProgressBar loadProgress;
 
     private RecyclerView mRecyclerView;
@@ -116,108 +110,66 @@ public class MainActivity extends AppCompatActivity {
         getArticles("today",20);
 
 
-        /*viewPager = (ViewPager) findViewById(R.id.viewpager);
-        setupViewPager(viewPager);
-        tabLayout = (TabLayout) findViewById(R.id.tabs);
-        tabLayout.setupWithViewPager(viewPager);*/
-//
-
-
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
 
+        getArticles("today",20);
+
+    }
 
     public  void getArticles(String searchText, @Nullable final Integer offset ){
-        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
 
-        Call<ApiResponse> call = apiService.getAlldata(API_KEY,searchText);
+        if(!NetworkHelper.isNetworkAvailable(this.getApplicationContext())){
+            Toast toast = Toast.makeText(getApplicationContext(),
+                    "Please make sure that the device is connected to internet",Toast.LENGTH_SHORT);
+            toast.show();
+        }
+        else {
+            ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
 
-        loadProgress = (ProgressBar) findViewById(R.id.progressBar);
-        loadProgress.setVisibility(View.VISIBLE);
+            Call<ApiResponse> call = apiService.getAlldata(API_KEY, searchText);
 
-        call.enqueue(new Callback<ApiResponse>() {
-            @Override
-            public void onResponse(Call<ApiResponse> call, Response<ApiResponse> response) {
-                try {
-                    if(response!= null && response.body()!= null) {
-                        articles = response.body().getResponse().getArticles();
-                        mAdapter = new CompleteAdapter(getApplicationContext(),articles);
+            loadProgress = (ProgressBar) findViewById(R.id.progressBar);
+            loadProgress.setVisibility(View.VISIBLE);
 
-                        mRecyclerView.setAdapter(mAdapter);
-                        mAdapter.notifyDataSetChanged();
-                        loadProgress.setVisibility(View.GONE);
-                        for (Article article:articles) {
+            call.enqueue(new Callback<ApiResponse>() {
+                @Override
+                public void onResponse(Call<ApiResponse> call, Response<ApiResponse> response) {
+                    try {
+                        if (response != null && response.body() != null) {
+                            articles = response.body().getResponse().getArticles();
+                            mAdapter = new CompleteAdapter(getApplicationContext(), articles);
 
-                            Log.e("#####",article.getHeadline().getMain());
+                            mRecyclerView.setAdapter(mAdapter);
+                            mAdapter.notifyDataSetChanged();
+                            loadProgress.setVisibility(View.GONE);
+                            for (Article article : articles) {
 
+                                Log.e("#####", article.getHeadline().getMain());
+
+                            }
+
+
+                        } else {
+                            Toast.makeText(getApplicationContext(), "There are no articles with the criteria specified", Toast.LENGTH_LONG).show();
                         }
-
-
-                    }else {
-                        Toast.makeText(getApplicationContext(),"There are no articles with the criteria specified",Toast.LENGTH_LONG).show();
+                    } catch (Exception ex) {
+                        Log.e(TAG, ex.getStackTrace().toString());
+                        Toast.makeText(getApplicationContext(), ex.toString(), Toast.LENGTH_LONG).show();
+                        ex.printStackTrace();
                     }
-                }catch (Exception ex){
-                    Log.e(TAG,ex.getStackTrace().toString());
-                    Toast.makeText(getApplicationContext(),ex.toString(),Toast.LENGTH_LONG).show();
-                    ex.printStackTrace();
                 }
-            }
 
-            @Override
-            public void onFailure(Call<ApiResponse> call, Throwable t) {
-                Toast.makeText(getApplicationContext(),"Issues connecting to API",Toast.LENGTH_SHORT).show();
-                Log.e(TAG,t.toString());
-            }
-        });
-    }
-
-
-
-
-    private void setupViewPager(ViewPager viewPager) {
-        ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
-        adapter.addFragment(new FragmentComplete(),"Completed");
-
-
-        viewPager.setAdapter(adapter);
-    }
-
-    class ViewPagerAdapter extends FragmentPagerAdapter
-    {
-        private final List<Fragment> mFragmentList = new ArrayList<>();
-        private final List<String> mFragmentTitleList = new ArrayList<>();
-        private final List<Integer> mFragmentIcon = new ArrayList<>();
-
-        public ViewPagerAdapter(FragmentManager fm) {
-            super(fm);
-        }
-
-        @Override
-        public android.support.v4.app.Fragment getItem(int position) {
-            return mFragmentList.get(position);
-        }
-
-        @Override
-        public int getCount() {
-            return mFragmentList.size();
-        }
-        public void addFragment(android.support.v4.app.Fragment fragment, String title) {
-            mFragmentList.add(fragment);
-            mFragmentTitleList.add(title);
-
-
-
-        }
-
-        @Override
-        public CharSequence getPageTitle(int position) {
-            return mFragmentTitleList.get(position);
-        }
-
-
-    }
-
-
+                @Override
+                public void onFailure(Call<ApiResponse> call, Throwable t) {
+                    Toast.makeText(getApplicationContext(), "Issues connecting to API", Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, t.toString());
+                }
+            });
+        } }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
