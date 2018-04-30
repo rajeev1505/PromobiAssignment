@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">PromobiAssignment</string>
+    <string name="action_settings">Settings</string>
+    <string name="search_hint_text">Search</string>
+    <string name="search_filter">Filter</string>
+    <string name="lbl_begin_date">Begin Date</string>
+    <string name="lbl_news_desk">News Desk Values</string>
+    <string name="chk_arts">Arts</string>
+    <string name="chk_fashion">Fashion and Style</string>
+    <string name="chk_Sports">Sports</string>
+    <string name="lbl_sort_order">Sort Order</string>
+    <string name="btn_save">Save</string>
+</resources>
